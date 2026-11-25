@@ -1,0 +1,97 @@
+name: Test
+
+on:
+  push:
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Minimum coverage, in percent, of lines and of branches (regions in Rust),
+  # for Rust and for the frontend.
+  # This is the only place to change it. Raise it as tests are added;
+  # the target is 90.
+  COVERAGE_MIN: 50
+  # The Tauri shell is left out: building it needs the system webview libraries.
+  # All the logic lives in the other crates, which build without them.
+  TAURI_PACKAGE: camarlingo
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    name: Rust (cargo test, coverage)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Every step below is skipped until the Cargo workspace exists.
+      - name: Set up Rust
+        if: hashFiles('Cargo.toml') != ''
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Install cargo-llvm-cov
+        if: hashFiles('Cargo.toml') != ''
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Cache Cargo
+        if: hashFiles('Cargo.toml') != ''
+        uses: Swatinem/rust-cache@v2
+
+      # cargo llvm-cov runs the tests and fails if coverage is below the minimum.
+      - name: Run tests with coverage
+        if: hashFiles('Cargo.toml') != ''
+        run: >
+          cargo llvm-cov --workspace --exclude "$TAURI_PACKAGE"
+          --fail-under-lines "$COVERAGE_MIN" --fail-under-regions "$COVERAGE_MIN" --html
+
+      - name: Upload coverage report
+        if: always() && hashFiles('target/llvm-cov/html/index.html') != ''
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-rust
+          path: target/llvm-cov/html/
+
+  frontend:
+    name: Frontend (Vitest, coverage)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Every step below is skipped until the frontend exists.
+      - name: Set up Node.js
+        if: hashFiles('package-lock.json') != ''
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        if: hashFiles('package-lock.json') != ''
+        run: npm ci
+
+      # The thresholds from COVERAGE_MIN override the ones in the Vite config.
+      - name: Run tests with coverage
+        if: hashFiles('package-lock.json') != ''
+        run: >
+          npx --no-install vitest run --coverage
+          --coverage.reporter=text --coverage.reporter=html
+          --coverage.thresholds.lines="$COVERAGE_MIN"
+          --coverage.thresholds.branches="$COVERAGE_MIN"
+
+      - name: Upload coverage report
+        if: always() && hashFiles('coverage/index.html') != ''
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-frontend
+          path: coverage/

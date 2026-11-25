@@ -1,0 +1,59 @@
+name: Commits
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  commitlint:
+    name: Conventional Commits (commitlint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # The whole history is needed to find the commits of this push or Pull Request.
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      # Installed in a temporary folder, so the check works before package.json exists
+      # and never touches the project dependencies.
+      - name: Install commitlint
+        run: >
+          npm install --no-save --no-package-lock --prefix "$RUNNER_TEMP/commitlint"
+          @commitlint/cli@20 @commitlint/config-conventional@20
+
+      - name: Check commit messages
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.sha }}
+        run: |
+          COMMITLINT="$RUNNER_TEMP/commitlint/node_modules/.bin/commitlint"
+          CONFIG="$RUNNER_TEMP/commitlint/node_modules/@commitlint/config-conventional"
+          NO_COMMIT="0000000000000000000000000000000000000000"
+
+          if [ "$EVENT" = "pull_request" ]; then
+            FROM="$PR_BASE"; TO="$PR_HEAD"
+          elif [ "$PUSH_BEFORE" != "$NO_COMMIT" ]; then
+            FROM="$PUSH_BEFORE"; TO="$PUSH_AFTER"
+          else
+            # New branch: check the commits that are not on main yet.
+            FROM="$(git merge-base origin/main "$PUSH_AFTER" 2>/dev/null || true)"; TO="$PUSH_AFTER"
+          fi
+
+          if [ -n "$FROM" ] && [ "$FROM" != "$TO" ]; then
+            "$COMMITLINT" --extends "$CONFIG" --from "$FROM" --to "$TO" --verbose
+          else
+            "$COMMITLINT" --extends "$CONFIG" --last --verbose
+          fi

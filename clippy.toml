@@ -1,0 +1,3 @@
+# More than five arguments make a function hard to read and to test:
+# group related values in a struct instead.
+too-many-arguments-threshold = 5

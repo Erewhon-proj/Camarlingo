@@ -1,0 +1,80 @@
+name: Lint
+
+on:
+  push:
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # The Tauri shell is left out: checking it needs the system webview libraries.
+  # All the logic lives in the other crates, which build without them.
+  TAURI_PACKAGE: camarlingo
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust:
+    name: Rust (rustfmt, clippy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Every step below is skipped until the Cargo workspace exists.
+      - name: Set up Rust
+        if: hashFiles('Cargo.toml') != ''
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo
+        if: hashFiles('Cargo.toml') != ''
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        if: hashFiles('Cargo.toml') != ''
+        run: cargo fmt --all --check
+
+      - name: Run clippy
+        if: hashFiles('Cargo.toml') != ''
+        run: cargo clippy --workspace --exclude "$TAURI_PACKAGE" --all-targets -- -D warnings
+
+  frontend:
+    name: Frontend (ESLint, Prettier, svelte-check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Every step below is skipped until the frontend exists.
+      - name: Set up Node.js
+        if: hashFiles('package-lock.json') != ''
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        if: hashFiles('package-lock.json') != ''
+        run: npm ci
+
+      - name: Run ESLint
+        if: hashFiles('package-lock.json') != ''
+        run: npx --no-install eslint .
+
+      - name: Check formatting
+        if: hashFiles('package-lock.json') != ''
+        run: npx --no-install prettier --check .
+
+      - name: Check types
+        if: hashFiles('package-lock.json') != ''
+        run: |
+          npx --no-install svelte-kit sync
+          npx --no-install svelte-check --fail-on-warnings

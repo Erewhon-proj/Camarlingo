@@ -1,0 +1,2 @@
+# Line length used across the project (Rust, TypeScript, Python).
+max_width = 100
