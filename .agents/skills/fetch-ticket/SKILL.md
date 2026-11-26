@@ -65,21 +65,26 @@ The input may list several tickets — before picking slugs and directories, rea
 ## Ticket file structure
 
 Must stand on its own: a complete, readable version of the ticket with enough metadata that a fresh
-session can identify the source without re-fetching.
+session can identify the ticket without re-fetching.
+
+Ticket files are committed with the code, so they carry the ticket **id only**: no tracker URLs,
+no tracker, workspace, team, project or milestone names, no tracker-generated branch names, and no
+account handles. The id is enough to fetch the ticket again through the tracker's MCP server.
+
+The ticket file is written in **English**, whatever the tracker's language: translate the title,
+the description, the comments and the other fields. User-facing strings (labels, messages shown
+in the interface), code identifiers, file paths and URLs stay verbatim, as below.
 
 ### Header
 
-Plain markdown header with source metadata; omit any line whose value is absent. Include whatever
-the tracker provides. Example:
+Plain markdown header; omit any line whose value is absent. Only the lines below, nothing else:
 
 ```markdown
 # <title / summary>
 
-> **Source** [<id>](<url>)
+> **Source** <id>
 > **Type** {type}
 > **Status** {status}
-> **Assignee** {display name or "—"}
-> **Reporter / Created by** {display name}
 > **Labels / Tags** {joined or "—"}
 > **Fetched** {today YYYY-MM-DD}
 ```
@@ -112,10 +117,11 @@ The main goal is that there is a trace of all related tickets, so they can be fe
 needed. One bullet each, with the relationship if available:
 
 ```markdown
-- [<id>](<url>) — (<type>, <status>) <title>
+- <id> — (<relationship>, <type>, <status>) <title>
 ```
 
-For non-ticket remote links (e.g. a wiki/Confluence page), emit the title and URL as a plain bullet.
+For non-ticket remote links (e.g. a wiki page), emit the title only, plus the URL when the page is
+public.
 If a fetch fails, list the link with `(unable to fetch)` rather than failing the whole run.
 
 ### Attachments & design references

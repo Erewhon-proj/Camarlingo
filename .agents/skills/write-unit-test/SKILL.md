@@ -1,6 +1,6 @@
 ---
 name: write-unit-test
-description: Write or extend unit tests in Rust (rstest, mockall), Svelte/TypeScript (Vitest) or Python (pytest), following Arrange-Act-Assert with parametrized cases and mocks. Use when new or changed logic needs tests, when coverage drops, or when the user asks for unit tests.
+description: Write or extend unit tests in Rust (rstest, mockall) or TypeScript (Vitest), following Arrange-Act-Assert with parametrized cases and mocks. Use when new or changed logic needs tests, when coverage drops, or when the user asks for unit tests.
 metadata:
   version: "1.0"
 ---
@@ -36,7 +36,8 @@ branch of the code under test reached by at least one case.
 
 - Unit tests: a `#[cfg(test)] mod tests` at the bottom of the file under test.
   Tests that cross crate boundaries: `crates/<crate>/tests/<feature>.rs`.
-- Parametrized: `rstest` with one `#[case::<name>(...)]` per case.
+- Parametrized: `rstest` with one `#[case::<name>(...)]` per case. A test with no cases or
+  fixtures uses plain `#[test]`.
 - Mocks: `mockall` on the trait (`#[cfg_attr(test, mockall::automock)]`); check calls with
   `.times(n)` and `.withf(...)`.
 - Invariants over many inputs (an allocation always sums to its total): `proptest`.
@@ -81,38 +82,32 @@ Run: `cargo test -p <crate>`; coverage: `cargo llvm-cov -p <crate> --html`.
 ## Svelte and TypeScript (Vitest)
 
 - Test file next to the module: `<module>.test.ts`.
-- Parametrized: `test.each` with an array of objects, one field per input plus `expected`, and
+- One `describe` per function under test, one `it` per behaviour.
+- Parametrized: `it.each` with an array of objects, one field per input plus `expected`, and
   `$name` in the title.
 - Mocks and spies: `vi.fn()`, `vi.spyOn()`, `vi.mock()`; restore them in `afterEach`.
 - The frontend holds no business logic, so its tests cover formatting, state and the calls it
   makes to the backend (mocked).
 
 ```ts
-test.each([
-  { name: 'zero', cents: 0, expected: '0,00' },
-  { name: 'thousands separator', cents: 123456, expected: '1.234,56' },
-])('formatCents formats $name', ({ cents, expected }) => {
-  // arrange
-  const value: number = cents;
+describe('formatCents', () => {
+  it.each([
+    { name: 'zero', cents: 0, expected: '0,00' },
+    { name: 'thousands separator', cents: 123456, expected: '1.234,56' },
+  ])('formats $name', ({ cents, expected }) => {
+    // arrange
+    const value: number = cents;
 
-  // act
-  const text = formatCents(value);
+    // act
+    const text = formatCents(value);
 
-  // assert
-  expect(text).toBe(expected);
+    // assert
+    expect(text).toBe(expected);
+  });
 });
 ```
 
 Run: `npx vitest run --coverage`.
-
-## Python (pytest)
-
-- Tests in `tests/test_<module>.py`, typed (`-> None`, `mocker: MockerFixture`).
-- Parametrized: `@pytest.mark.parametrize`; mocks and spies: `pytest-mock`
-  (`mocker.patch`, `mocker.spy`, then check `call_count`).
-- Comments `# arrange`, `# act`, `# assert`.
-
-Run: `pytest --cov`.
 
 ## Done when
 
