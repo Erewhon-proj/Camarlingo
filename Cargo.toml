@@ -1,0 +1,19 @@
+[workspace]
+resolver = "3"
+# Dependencies point inwards: app and db may use domain, the Tauri shell uses app
+# (and db, to choose the implementations at startup), and nothing depends on the shell.
+members = ["crates/domain", "crates/app", "crates/db", "src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.90"
+publish = false
+
+[workspace.dependencies]
+camarlingo-app = { path = "crates/app" }
+serde = { version = "1", features = ["derive"] }
+rstest = "0.26"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
