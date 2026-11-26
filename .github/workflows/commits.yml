@@ -40,7 +40,7 @@ jobs:
           PUSH_AFTER: ${{ github.sha }}
         run: |
           COMMITLINT="$RUNNER_TEMP/commitlint/node_modules/.bin/commitlint"
-          CONFIG="$RUNNER_TEMP/commitlint/node_modules/@commitlint/config-conventional"
+          CONFIG="$RUNNER_TEMP/commitlint/node_modules/@commitlint/config-conventional/lib/index.js"
           NO_COMMIT="0000000000000000000000000000000000000000"
 
           if [ "$EVENT" = "pull_request" ]; then
