@@ -13,7 +13,7 @@ Its report is `done` or `blocked`:
 
 - `blocked` → put the decision to the user as one question, recommending the subagent's pick, and
   relaunch with the answer added to the brief.
-- `done` → confirm the file exists at the returned path and its Source line names the input, then
+- `done` → confirm the file exists at the returned path and its Source line names the input's id, then
   show the user the paths, the warn list and any re-fetch note as fetch-ticket itself would have
   printed them. Fidelity to the tracker is the subagent's job — never re-fetch to check it.
 

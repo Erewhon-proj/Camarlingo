@@ -80,7 +80,7 @@ and nothing named only by a stand-in the reader hasn't seen.
 ```markdown
 # <ticket title> — implementation status
 
-> **Ticket** [<id>](<url>) · **Checked** <YYYY-MM-DD> · **Against** <branch>@<short-sha> (+ uncommitted)
+> **Ticket** <id> · **Checked** <YYYY-MM-DD> · **Against** <branch>@<short-sha> (+ uncommitted)
 
 **4 ✅ · 2 🟡 · 1 🟥 · 1 ⚪**
 

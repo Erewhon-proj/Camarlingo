@@ -1,0 +1,21 @@
+[package]
+name = "camarlingo"
+description = "Desktop shell: thin Tauri commands over the application services"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+name = "camarlingo_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7.6", features = [] }
+
+[dependencies]
+camarlingo-app.workspace = true
+tauri = { version = "2.12.7", features = [] }
+
+[lints]
+workspace = true

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to release, for example 0.1.0"
+        description: 'Version to release, for example 0.1.0'
         required: true
 
 permissions:
@@ -37,7 +37,7 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: ". -> target"
+          workspaces: '. -> target'
 
       - name: Set up Node.js
         uses: actions/setup-node@v6

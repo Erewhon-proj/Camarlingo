@@ -1,0 +1,8 @@
+# Package managers
+package-lock.json
+
+# Generated or copied files
+/static/
+/src-tauri/gen/
+/src-tauri/icons/
+/.agents/skills/
